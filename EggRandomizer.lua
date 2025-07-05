@@ -1,46 +1,69 @@
 local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- 📦 GUI Setup
+-- GUI Setup
 local screenGui = Instance.new("ScreenGui", playerGui)
-screenGui.Name = "EggRandomizerGUI"
+screenGui.Name = "AutoEggRandomizer"
 screenGui.ResetOnSpawn = false
 
--- 🪟 Main draggable frame
-local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 300, 0, 200)
-mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
-mainFrame.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-mainFrame.Active = true
-mainFrame.Draggable = true
+-- Main Frame (Draggable)
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 200, 0, 130)
+frame.Position = UDim2.new(1, -210, 0.4, 0)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
 
--- 🧾 Title
-local title = Instance.new("TextLabel", mainFrame)
-title.Size = UDim2.new(1, 0, 0, 30)
-title.Position = UDim2.new(0, 0, 0, 0)
-title.Text = "🥚 Egg Randomizer"
-title.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
-title.TextColor3 = Color3.new(1, 1, 1)
-title.TextScaled = true
+-- Auto Stop Button
+local stopBtn = Instance.new("TextButton", frame)
+stopBtn.Size = UDim2.new(1, 0, 0, 30)
+stopBtn.Position = UDim2.new(0, 0, 0, 0)
+stopBtn.BackgroundColor3 = Color3.fromRGB(90, 0, 0)
+stopBtn.TextColor3 = Color3.new(1, 1, 1)
+stopBtn.TextScaled = true
+stopBtn.Text = "🔴 Auto Stop: ON"
 
--- 🐣 Result label
-local resultLabel = Instance.new("TextLabel", mainFrame)
-resultLabel.Size = UDim2.new(1, -20, 0, 60)
-resultLabel.Position = UDim2.new(0, 10, 0, 50)
-resultLabel.Text = "Waiting..."
-resultLabel.BackgroundTransparency = 1
-resultLabel.TextScaled = true
-resultLabel.TextColor3 = Color3.new(0, 0, 0)
+-- Auto Randomizer Button
+local autoBtn = Instance.new("TextButton", frame)
+autoBtn.Size = UDim2.new(1, 0, 0, 30)
+autoBtn.Position = UDim2.new(0, 0, 0, 30)
+autoBtn.BackgroundColor3 = Color3.fromRGB(0, 90, 0)
+autoBtn.TextColor3 = Color3.new(1, 1, 1)
+autoBtn.TextScaled = true
+autoBtn.Text = "🟢 Auto Randomizer: ON"
 
--- 🎯 Hatch button
-local hatchButton = Instance.new("TextButton", mainFrame)
-hatchButton.Size = UDim2.new(0, 200, 0, 40)
-hatchButton.Position = UDim2.new(0.5, -100, 1, -50)
-hatchButton.Text = "🎲 Randomize Egg"
-hatchButton.BackgroundColor3 = Color3.fromRGB(255, 230, 180)
-hatchButton.TextScaled = true
+-- Countdown Label
+local countdownLabel = Instance.new("TextLabel", frame)
+countdownLabel.Size = UDim2.new(1, 0, 0, 25)
+countdownLabel.Position = UDim2.new(0, 0, 0, 60)
+countdownLabel.BackgroundTransparency = 1
+countdownLabel.TextColor3 = Color3.new(1, 1, 1)
+countdownLabel.TextScaled = true
+countdownLabel.Text = "Changing in: 30"
 
--- 🐾 Egg data
+-- Pet Display
+local petLabel = Instance.new("TextLabel", frame)
+petLabel.Size = UDim2.new(1, -10, 0, 25)
+petLabel.Position = UDim2.new(0, 5, 0, 90)
+petLabel.BackgroundTransparency = 1
+petLabel.TextColor3 = Color3.new(1, 1, 1)
+petLabel.TextScaled = true
+petLabel.Text = "Waiting..."
+
+-- Help Button
+local helpBtn = Instance.new("TextButton", frame)
+helpBtn.Size = UDim2.new(0, 25, 0, 25)
+helpBtn.Position = UDim2.new(1, -28, 0, 3)
+helpBtn.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+helpBtn.TextColor3 = Color3.new(1, 1, 1)
+helpBtn.Text = "?"
+
+helpBtn.MouseButton1Click:Connect(function()
+	warn("Auto Egg Randomizer: Visual-only tool. Randomizes fake eggs/pets every 30s.")
+end)
+
+-- Egg + Pet Table
 local eggPets = {
 	Common = {"Golden Lab", "Dog", "Bunny"},
 	Uncommon = {"Black Bunny", "Chicken", "Cat", "Deer"},
@@ -52,32 +75,43 @@ local eggPets = {
 	Oasis = {"Meerkat", "Sand Snake", "Axolotl", "Hyacinth Macaw", "Fennec Fox"}
 }
 
-local canHatch = true
+-- Auto Control States
+local autoRunning = true
+local autoRandomizer = true
 
--- 🎲 Hatch logic with 10s cooldown
-hatchButton.MouseButton1Click:Connect(function()
-	if not canHatch then
-		resultLabel.Text = "⏳ Please wait..."
-		return
+-- Toggle Auto Stop
+stopBtn.MouseButton1Click:Connect(function()
+	autoRunning = not autoRunning
+	stopBtn.Text = autoRunning and "🔴 Auto Stop: ON" or "🟢 Auto Stop: OFF"
+end)
+
+-- Toggle Auto Randomizer
+autoBtn.MouseButton1Click:Connect(function()
+	autoRandomizer = not autoRandomizer
+	autoBtn.Text = autoRandomizer and "🟢 Auto Randomizer: ON" or "🔴 Auto Randomizer: OFF"
+end)
+
+-- Main Randomizer Loop
+task.spawn(function()
+	local timer = 30
+	while true do
+		if autoRunning and autoRandomizer then
+			countdownLabel.Text = "Changing in: " .. timer
+			timer -= 1
+			if timer <= 0 then
+				-- Randomize
+				local eggNames = {}
+				for egg in pairs(eggPets) do
+					table.insert(eggNames, egg)
+				end
+				local selectedEgg = eggNames[math.random(1, #eggNames)]
+				local selectedPet = eggPets[selectedEgg][math.random(1, #eggPets[selectedEgg])]
+				petLabel.Text = selectedEgg .. " Egg | " .. selectedPet
+				timer = 30
+			end
+		else
+			countdownLabel.Text = "Paused"
+		end
+		task.wait(1)
 	end
-
-	-- Random egg and pet
-	local eggNames = {}
-	for eggName in pairs(eggPets) do
-		table.insert(eggNames, eggName)
-	end
-	local randomEgg = eggNames[math.random(1, #eggNames)]
-	local petList = eggPets[randomEgg]
-	local randomPet = petList[math.random(1, #petList)]
-
-	-- Show result
-	resultLabel.Text = "🥚 Egg: " .. randomEgg .. "\n🎉 Pet: " .. randomPet
-
-	-- Cooldown
-	canHatch = false
-	hatchButton.Text = "⏳ Cooling down..."
-	task.delay(10, function()
-		canHatch = true
-		hatchButton.Text = "🎲 Randomize Egg"
-	end)
 end)
